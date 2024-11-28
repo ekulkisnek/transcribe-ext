@@ -1,14 +1,13 @@
 {
     "manifest_version": 3,
-    "name": "My Minimal Extension",
+    "name": "Tab Audio Capture",
     "version": "1.0",
-    "description": "A minimal Chrome extension.",
-    "permissions": [],
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png"
-    },
+    "permissions": ["desktopCapture", "tabs", "activeTab"],
+    "host_permissions": ["<all_urls>"],
     "background": {
         "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
     }
 }
