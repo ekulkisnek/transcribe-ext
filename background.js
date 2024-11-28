@@ -32,7 +32,7 @@ async function ensureOffscreenDocument(streamId) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.command === "start-capture") {
-        console.log("Starting capture...");
+        console.log("Received start-capture command for tabId:", message.tabId);
         startCapture(message.tabId).then(() => {
             sendResponse({ status: "Capture started" });
         }).catch((error) => {
@@ -47,29 +47,31 @@ async function startCapture(tabId) {
     try {
         if (!tabId) throw new Error("No tab ID provided.");
 
-        // Get the tab object using the tabId
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        console.log("Querying tab with ID:", tabId);
+        const tab = await chrome.tabs.get(tabId);
         if (!tab) throw new Error("Tab not found.");
 
-        // Request desktop capture
+        console.log("Requesting desktop capture for tab:", tab);
         const streamId = await new Promise((resolve, reject) => {
             chrome.desktopCapture.chooseDesktopMedia(
                 ["tab", "audio"],
-                tab, // Pass the tab object as targetTab
+                tab,
                 (streamId) => {
                     if (chrome.runtime.lastError || !streamId) {
                         const errorMessage = chrome.runtime.lastError
                             ? chrome.runtime.lastError.message
                             : "User canceled the request.";
+                        console.error("Error in chooseDesktopMedia:", errorMessage);
                         reject(new Error(errorMessage));
                     } else {
+                        console.log("Stream ID obtained:", streamId);
                         resolve(streamId);
                     }
                 }
             );
         });
 
-        // Use getUserMedia with the obtained streamId
+        console.log("Obtaining media stream with streamId:", streamId);
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 mandatory: {
@@ -81,7 +83,6 @@ async function startCapture(tabId) {
         });
 
         console.log("Captured audio stream:", stream);
-
         // Process the stream as needed
     } catch (error) {
         console.error("Error in startCapture:", error);
